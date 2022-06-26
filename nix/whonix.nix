@@ -180,19 +180,31 @@ let
 
         ${dockerTools.shadowSetup}
 
+        : ''${HOST_GID:=100}
+        : ''${HOST_UID:=1000}
+
         groupadd -g "$HOST_GID" x
         useradd -u "$HOST_UID" -g "$HOST_GID" -m x
         id -G x | if ! grep -q $KVM_GID; then
           groupadd -g "$KVM_GID" kvm
           usermod -aG kvm x
         fi
-        id -G x | if ! grep -q $AUDIO_GID; then
-          groupadd -g "$AUDIO_GID" audio
-          usermod -aG audio x
+        if [ ! -z ''${AUDIO_GID+x} ]; then
+          id -G x | if ! grep -q $AUDIO_GID; then
+            groupadd -g "$AUDIO_GID" audio
+            usermod -aG audio x
+          fi
         fi
 
         mkdir -p /etc/nix
         ln -s ${./nix.conf} /etc/nix/nix.conf
+
+        shared_base=/shared
+        shared_dirs="$shared_base/container $shared_base/gateway $shared_base/workstation"
+        if [ ! -d $shared_base ]; then
+          mkdir -p $shared_dirs
+          chown x:x $shared_dirs
+        fi
 
         mkdir -p ${runtimeImagesDir}
         chown x:x ${runtimeImagesDir}
