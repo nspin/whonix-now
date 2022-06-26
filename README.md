@@ -26,5 +26,5 @@ docker run --rm -it --name whonix-now-demo --label whonix-now-demo \
     --env KVM_GID=$(stat -c '%g' /dev/kvm) \
     --env DISPLAY \
     whonix-now-demo \
-    $(nix-build ../whonix-now/nix -A entryScript)
+    $(nix build 'github:nspin/whonix-now?dir=nix#entryScript' --print-out-paths --extra-experimental-features nix-command --extra-experimental-features flakes)
 ```
