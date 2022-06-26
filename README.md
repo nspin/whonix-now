@@ -4,7 +4,7 @@
 
 `DOCUMENTATION UNDER CONSTRUCTION`
 
-### Quick start
+## Quickstart
 
 No need to clone this repository.
 
