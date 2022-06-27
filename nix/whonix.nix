@@ -9,11 +9,15 @@
 }:
 
 let
+  enableSharedDirectories = false;
+  enablePersistentImages = false;
   gatewayMemoryMegabytes = 2048;
   workstationMemoryMegabytes = 2048;
 in
 
 let
+  runtimeImagesDirectory = if enablePersistentImages then "/shared/container" else "/images";
+
   images =
     let
       xz = fetchurl {
@@ -27,25 +31,26 @@ let
         mkdir $out
         tar -xvf ${xz} -C $out
 
-        x=$(echo $out/Whonix-Gateway-*.qcow2)
-        mv $x $x.sparse
-        qemu-img convert -c -f qcow2 -O qcow2 $x.sparse $x
-        rm $x.sparse
+        compress() {
+          path=$1
+          mv $path $path.sparse
+          qemu-img convert -c -f qcow2 -O qcow2 $path.sparse $path
+          rm $path.sparse
+        }
 
-        x=$(echo $out/Whonix-Workstation-*.qcow2)
-        mv $x $x.sparse
-        qemu-img convert -c -f qcow2 -O qcow2 $x.sparse $x
-        rm $x.sparse
+        compress $(echo $out/Whonix-Gateway-*.qcow2)
+        compress $(echo $out/Whonix-Workstation-*.qcow2)
       '';
 
       patched =
         let
-          sharedDirectoryFragment = subdirectory: lib.replaceChars [ "\n" ] [ "\\n" ] ''
-            <filesystem type='mount' accessmode='mapped'>
-              <source dir='/shared/${subdirectory}'/>
-              <target dir='shared'/>
-            </filesystem>
-          '';
+          sharedDirectoryFragment = subdirectory:
+            lib.replaceChars [ "\n" ] [ "\\n" ] (lib.optionalString enableSharedDirectories ''
+              <filesystem type='mount' accessmode='mapped'>
+                <source dir='/shared/${subdirectory}'/>
+                <target dir='shared'/>
+              </filesystem>
+            '');
         in
           runCommand "x" {
             nativeBuildInputs = [ qemu libguestfs-with-appliance ];
@@ -53,19 +58,21 @@ let
             mkdir $out
 
             sed \
-              -e 's,<blkiotune>,<!--,' \
-              -e 's,</blkiotune>,-->,' \
+              -e "s,<blkiotune>,<!--," \
+              -e "s,</blkiotune>,-->," \
               -e "s,<memory dumpCore='off' unit='KiB'>.*</memory>,<memory dumpCore='off' unit='KiB'>${toString (gatewayMemoryMegabytes * 1024)}</memory>," \
               -e "s,<currentMemory unit='KiB'>.*</currentMemory>,," \
               -e "s,</devices>,${sharedDirectoryFragment "gateway"}</devices>," \
+              -e "s,/var/lib/libvirt/images,${runtimeImagesDirectory}," \
               < ${unpacked}/Whonix-Gateway-*.xml > $out/Whonix-Gateway.xml
 
             sed \
-              -e 's,<blkiotune>,<!--,' \
-              -e 's,</blkiotune>,-->,' \
+              -e "s,<blkiotune>,<!--," \
+              -e "s,</blkiotune>,-->," \
               -e "s,<memory dumpCore='off' unit='KiB'>.*</memory>,<memory dumpCore='off' unit='KiB'>${toString (workstationMemoryMegabytes * 1024)}</memory>," \
               -e "s,<currentMemory unit='KiB'>.*</currentMemory>,," \
               -e "s,</devices>,${sharedDirectoryFragment "workstation"}</devices>," \
+              -e "s,/var/lib/libvirt/images,${runtimeImagesDirectory}," \
               < ${unpacked}/Whonix-Workstation-*.xml > $out/Whonix-Workstation.xml
 
             ln -s ${unpacked}/Whonix-Workstation-*.qcow2 $out/Whonix-Workstation.qcow2
@@ -170,44 +177,51 @@ let
         ];
       };
 
-      runtimeImagesDir = "/var/lib/libvirt/images";
-
       entryScript = writeScript "entry.sh" ''
         #!${runtimeShell}
         set -eu
 
         export PATH=${entryScriptEnv}/bin:$PATH
 
-        ${dockerTools.shadowSetup}
+        # validate and process input
+        : "''${HOST_GID:=100}"
+        : "''${HOST_UID:=1000}"
+        [ -n "$KVM_GID" ]
+        [ -z "''${AUDIO_GID+x}" ] || [ -n "$AUDIO_GID"} ]
 
-        : ''${HOST_GID:=100}
-        : ''${HOST_UID:=1000}
+        ${dockerTools.shadowSetup}
 
         groupadd -g "$HOST_GID" x
         useradd -u "$HOST_UID" -g "$HOST_GID" -m x
-        id -G x | if ! grep -q $KVM_GID; then
-          groupadd -g "$KVM_GID" kvm
-          usermod -aG kvm x
-        fi
-        if [ ! -z ''${AUDIO_GID+x} ]; then
-          id -G x | if ! grep -q $AUDIO_GID; then
-            groupadd -g "$AUDIO_GID" audio
-            usermod -aG audio x
+
+        ensure_group() {
+          group=$1
+          gid=$2
+          id -G x | if ! grep -q $gid; then
+            groupadd -g $gid $group
+            usermod -aG $group x
           fi
+        }
+        ensure_group kvm $KVM_GID
+        if [ -n "''${AUDIO_GID+x}" ]; then
+          ensure_group audio $AUDIO_GID
         fi
 
-        mkdir -p /etc/nix
-        ln -s ${./nix.conf} /etc/nix/nix.conf
+        ensure_user_dir() {
+          if [ ! -d $1 ]; then
+            mkdir -p $1
+            chown x:x $1
+          fi
+        }
 
         shared_base=/shared
         shared_dirs="$shared_base/container $shared_base/gateway $shared_base/workstation"
-        if [ ! -d $shared_base ]; then
-          mkdir -p $shared_dirs
-          chown x:x $shared_dirs
-        fi
+        ensure_user_dir $shared_base
+        for d in $shared_dirs; do
+          ensure_user_dir $d
+        done
 
-        mkdir -p ${runtimeImagesDir}
-        chown x:x ${runtimeImagesDir}
+        ensure_user_dir ${runtimeImagesDirectory}
 
         mkdir -p /run/wrappers/bin
         cp ${qemu}/libexec/qemu-bridge-helper /run/wrappers/bin
@@ -230,6 +244,9 @@ let
         echo "allow $ext_br_dev" >> /etc/qemu/bridge.conf
         echo "allow $int_br_dev" >> /etc/qemu/bridge.conf
 
+        mkdir -p /etc/nix
+        ln -s ${./nix.conf} /etc/nix/nix.conf
+
         ${gosu}/bin/gosu x ${entryScriptContinuation}
       '';
 
@@ -240,12 +257,14 @@ let
         touch ${xauthorityPath}
         ${refreshXauthority}/bin/refresh-xauthority
 
-        create_shallow() {
-          ${qemu}/bin/qemu-img create -f qcow2 -o backing_fmt=qcow2 -o backing_file=$1 ${runtimeImagesDir}/$2
+        ensure_image() {
+          if [ ! -f ${runtimeImagesDirectory}/$2 ]; then
+            ${qemu}/bin/qemu-img create -f qcow2 -o backing_fmt=qcow2 -o backing_file=$1 ${runtimeImagesDirectory}/$2
+          fi
         }
 
-        create_shallow ${gatewayQcow2} Whonix-Gateway.qcow2
-        create_shallow ${workstationQcow2} Whonix-Workstation.qcow2
+        ensure_image ${gatewayQcow2} Whonix-Gateway.qcow2
+        ensure_image ${workstationQcow2} Whonix-Workstation.qcow2
 
         virsh_c() {
           ${libvirt}/bin/virsh -c qemu:///session "$@"
@@ -262,6 +281,7 @@ let
 
         XAUTHORITY=${xauthorityPath} ${virt-manager}/bin/virt-manager -c qemu:///session
 
+        echo "Initialization complete. Sleeping..."
         sleep inf
       '';
 

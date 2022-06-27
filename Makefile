@@ -1,6 +1,3 @@
-shared_base := shared
-shared_dirs := $(addprefix $(shared_base)/,container workstation gateway)
-
 universal_name := whonix-demo
 
 label := $(universal_name)
@@ -8,6 +5,8 @@ image_repository := $(universal_name)
 image_tag := $(image_repository)
 container_name := $(universal_name)
 dockerfile := Dockerfile
+
+shared_dir := shared
 
 host_uid := $(shell id -u)
 host_gid := $(shell id -g)
@@ -20,7 +19,7 @@ interact_script_fragment := $$(nix-build nix -A interactScript)
 .PHONY: none
 none:
 
-$(shared_dirs):
+$(shared_dir):
 	mkdir -p $@
 
 .PHONY: build
@@ -29,7 +28,7 @@ build:
 		--label $(label) -t $(image_tag) -f $(dockerfile) .
 
 .PHONY: run
-run: build | $(shared_dirs)
+run: build | $(shared_dir)
 	docker run -d -it --name $(container_name) --label $(label) \
 		--cap-add=NET_ADMIN \
 		--tmpfs /tmp \
@@ -41,7 +40,7 @@ run: build | $(shared_dirs)
 		--mount type=bind,src=/nix/var/nix/daemon-socket,dst=/nix/var/nix/daemon-socket,ro \
 		--mount type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix,ro \
 		--mount type=bind,src=$(XAUTHORITY),dst=/host.Xauthority,ro \
-		--mount type=bind,src=$(abspath $(shared_base)),dst=/shared \
+		--mount type=bind,src=$(abspath $(shared_dir)),dst=/shared \
 		--env HOST_UID=$(host_uid) \
 		--env HOST_GID=$(host_gid) \
 		--env KVM_GID=$(kvm_gid) \
