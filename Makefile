@@ -11,7 +11,7 @@ shared_dir := shared
 host_uid := $(shell id -u)
 host_gid := $(shell id -g)
 kvm_gid := $(shell stat -c '%g' /dev/kvm)
-audio_gid := $(shell stat -c '%g' /dev/snd/timer) # HACK is this portable?
+audio_gid := $(shell stat -c '%g' /dev/snd/timer)
 
 entry_script_fragment := $$(nix-build nix -A entryScript)
 interact_script_fragment := $$(nix-build nix -A interactScript)
