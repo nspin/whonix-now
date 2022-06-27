@@ -17,7 +17,6 @@ echo "FROM scratch" | docker build --label whonix-now-demo -t whonix-now-demo -f
 
 docker run --rm -it --name whonix-now-demo --label whonix-now-demo \
     --cap-add=NET_ADMIN \
-    --tmpfs /tmp \
     --device /dev/kvm \
     --device /dev/net/tun \
     --mount type=bind,src=/nix/store,dst=/nix/store,ro \
