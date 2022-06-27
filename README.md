@@ -38,3 +38,5 @@ docker run --rm -it --name whonix-now-demo --label whonix-now-demo \
     $(nix build 'github:nspin/whonix-now?dir=nix#entryScript' --print-out-paths \
         --extra-experimental-features nix-command --extra-experimental-features flakes)
 ```
+
+See [./Makefile](./Makefile) and [./nix/whonix.nix](./nix/whonix.nix) for more features such as shared directories and audio support.
