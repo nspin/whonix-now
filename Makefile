@@ -1,4 +1,4 @@
-universal_name := whonix-demo
+universal_name := whonix-now-demo
 
 label := $(universal_name)
 image_repository := $(universal_name)
