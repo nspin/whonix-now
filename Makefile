@@ -83,7 +83,7 @@ self-contained-image-build:
 	docker load -i $$(nix-build nix -A selfContainedImage)
 
 .PHONY: self-contained-image-run
-self-contained-image-run: | $(shared_dirs)
+self-contained-image-run: | $(shared_dir)
 	docker run -d -it --name $(container_name) --label $(label) \
 		--cap-add=NET_ADMIN \
 		--tmpfs /tmp \
@@ -92,7 +92,7 @@ self-contained-image-run: | $(shared_dirs)
 		--device /dev/snd \
 		--mount type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix,ro \
 		--mount type=bind,src=$(XAUTHORITY),dst=/host.Xauthority,ro \
-		--mount type=bind,src=$(abspath $(shared_base)),dst=/shared \
+		--mount type=bind,src=$(abspath $(shared_dir)),dst=/shared \
 		--env HOST_UID=$(host_uid) \
 		--env HOST_GID=$(host_gid) \
 		--env KVM_GID=$(kvm_gid) \
