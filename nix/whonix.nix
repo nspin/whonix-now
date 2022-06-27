@@ -1,4 +1,5 @@
-{ stdenv, lib, runCommand, writeText, writeScript, writeScriptBin, runtimeShell, buildEnv
+{ stdenv, lib, callPackage
+, runCommand, writeText, writeScript, writeScriptBin, runtimeShell, buildEnv
 , fetchurl
 , nix, cacert
 , qemu, libvirt, virt-manager, libguestfs-with-appliance
@@ -9,13 +10,18 @@
 }:
 
 let
-  enableSharedDirectories = false;
-  enablePersistentImages = false;
+  kaliWorkstation = true;
+  enableSharedDirectories = true;
+  enablePersistentImages = true;
+  gatewayVcpus = 1;
   gatewayMemoryMegabytes = 2048;
-  workstationMemoryMegabytes = 2048;
+  workstationVcpus = 2;
+  workstationMemoryMegabytes = 4096;
 in
 
 let
+  kali = callPackage ./kali.nix {};
+
   runtimeImagesDirectory = if enablePersistentImages then "/shared/container" else "/images";
 
   images =
@@ -60,6 +66,7 @@ let
             sed \
               -e "s,<blkiotune>,<!--," \
               -e "s,</blkiotune>,-->," \
+              -e "s,<vcpu placement='static' cpuset='0'>1</vcpu>,<vcpu placement='static' cpuset='0'>${toString gatewayVcpus}</vcpu>," \
               -e "s,<memory dumpCore='off' unit='KiB'>.*</memory>,<memory dumpCore='off' unit='KiB'>${toString (gatewayMemoryMegabytes * 1024)}</memory>," \
               -e "s,<currentMemory unit='KiB'>.*</currentMemory>,," \
               -e "s,</devices>,${sharedDirectoryFragment "gateway"}</devices>," \
@@ -69,6 +76,7 @@ let
             sed \
               -e "s,<blkiotune>,<!--," \
               -e "s,</blkiotune>,-->," \
+              -e "s,<vcpu placement='static' cpuset='1'>1</vcpu>,<vcpu placement='static' cpuset='1'>${toString workstationVcpus}</vcpu>," \
               -e "s,<memory dumpCore='off' unit='KiB'>.*</memory>,<memory dumpCore='off' unit='KiB'>${toString (workstationMemoryMegabytes * 1024)}</memory>," \
               -e "s,<currentMemory unit='KiB'>.*</currentMemory>,," \
               -e "s,</devices>,${sharedDirectoryFragment "workstation"}</devices>," \
@@ -89,6 +97,7 @@ let
             guestfish add $new : run : mount /dev/sda1 / : copy-out $path .
             echo GATEWAY_ALLOW_INCOMING_ICMP=1 >> $fname
             guestfish add $new : run : mount /dev/sda1 / : copy-in $fname $dir
+            rm $fname
 
             fname=whonix-gateway-firewall
             dir=/usr/bin
@@ -98,10 +107,11 @@ let
               's,\$iptables_cmd -A INPUT -p icmp -j DROP,$iptables_cmd -A INPUT -p icmp -j DROP; else $iptables_cmd -A INPUT -p icmp --icmp-type destination-unreachable -m state --state RELATED -j ACCEPT,' \
               $fname
             guestfish add $new : run : mount /dev/sda1 / : copy-in $fname $dir : chown 0 0 $path : chmod 0755 $path
+            rm $fname
           '';
 
       gatewayQcow2 = "${patched}/Whonix-Gateway.qcow2";
-      workstationQcow2 = "${patched}/Whonix-Workstation.qcow2";
+      workstationQcow2 = if kaliWorkstation then kali.images.vmQcow2 else "${patched}/Whonix-Workstation.qcow2";
 
       gatewayXml = "${patched}/Whonix-Gateway.xml";
       workstationXml = "${patched}/Whonix-Workstation.xml";
@@ -306,7 +316,7 @@ let
   };
 
 in {
-  inherit images scripts;
+  inherit images scripts kali;
   inherit (scripts) entryScript interactScript;
   inherit selfContainedImage;
 }

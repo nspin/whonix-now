@@ -23,7 +23,7 @@ First, install [Nix](https://nixos.org/download.html).
 Then, run:
 
 ```sh
-echo "FROM scratch" | docker build --label whonix-now-demo -t whonix-now-demo -f - .
+echo "FROM scratch" | docker build --label whonix-now-demo -t whonix-now-demo -f - /var/empty
 
 docker run --rm -it --name whonix-now-demo --label whonix-now-demo \
     --cap-add=NET_ADMIN \
