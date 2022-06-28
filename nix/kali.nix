@@ -47,69 +47,45 @@ let
         copy-in persistence.conf /
         EOF
 
-        # read from ro partition, write to rw overlay
-
-        fname1=interfaces
-        dir1=/etc/network
-        path1=$dir1/$fname1
-        fname2=resolv.conf 
-        dir2=/etc
-        path2=$dir2/$fname2
-        fname3=live.cfg
-        dir3=/isolinux
-        path3=$dir3/$fname3
-
-        guestfish --ro <<EOF
-        add $img
-        run
-        mkmountpoint /parent
-        mkmountpoint /child
-        mount /dev/sda1 /parent
-        mount-loop /parent/live/filesystem.squashfs /child
-        copy-out /child$path1 .
-        copy-out /child$path2 .
-        copy-out /parent$path3 .
-        umount /child
-        EOF
-
-        cat ${appendInterfaces} >> $fname1
-        cat ${appendResolveConf} >> $fname2
-
-        sed -i \
-          -e 's,append boot=live username=kali hostname=kali persistence,append boot=live username=kali hostname=kali persistence ip=frommedia,' \
-          $fname3
+        cp ${resolvConf} resolv.conf
+        cp ${rcLocal} rc.local
 
         guestfish <<EOF
         add $img
         run
-        mkmountpoint /live
-        mkmountpoint /persistence
-        mount /dev/sda1 /live
-        mount /dev/sda3 /persistence
-        mkdir-p /persistence/rw$dir1
-        copy-in $fname1 /persistence/rw$dir1
-        mkdir-p /persistence/rw$dir2
-        copy-in $fname2 /persistence/rw$dir2
-        mkdir-p /live$dir3
-        copy-in $fname3 /live$dir3
+        mount /dev/sda3 /
+        mkdir-p /rw/etc
+        copy-in resolv.conf /rw/etc
+        copy-in rc.local /rw/etc
+        chmod 0755 /rw/etc/rc.local
         EOF
-
-        rm $fname1
-        rm $fname2
 
         mv $img $out
       '';
 
-      appendInterfaces = writeText "x" ''
-        auto eth0
+      resolvConf = writeText "x" ''
+        nameserver 10.152.152.10
+      '';
+
+      # HACK
+      # Ideally we'd be able to just statically append to
+      # /etc/network/interfaces at built time, but the live image has some awful
+      # scripts which overwrite that file a each boot. See
+      # /lib/live/boot/9990-netbase.sh:38. According to these scripts, we could
+      # prevent that behavior with a kernel cmdline parameter, but this gross
+      # /etc/rc.local hack has the advantage of only affecting the persistence
+      # partition.
+      rcLocal = writeText "x" ''
+        #!/bin/sh
+
+        cat >> /etc/network/interfaces <<EOF
         iface eth0 inet static
           address 10.152.152.11
           netmask 255.255.192.0
           gateway 10.152.152.10
-      '';
+        EOF
 
-      appendResolveConf = writeText "x" ''
-        nameserver 10.152.152.10
+        ifup eth0
       '';
 
     in {
