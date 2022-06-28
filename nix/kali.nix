@@ -47,15 +47,28 @@ let
         copy-in persistence.conf /
         EOF
 
+        guestfish --ro <<EOF
+        add $img
+        run
+        mkmountpoint /parent
+        mkmountpoint /child
+        mount /dev/sda1 /parent
+        mount-loop /parent/live/filesystem.squashfs /child
+        copy-out /child/etc/NetworkManager/NetworkManager.conf .
+        umount /child
+        EOF
+
         cp ${resolvConf} resolv.conf
+        cat ${appendNetworkManagerConf} >> NetworkManager.conf
         cp ${rcLocal} rc.local
 
         guestfish <<EOF
         add $img
         run
         mount /dev/sda3 /
-        mkdir-p /rw/etc
+        mkdir-p /rw/etc/NetworkManager
         copy-in resolv.conf /rw/etc
+        copy-in NetworkManager.conf /rw/etc/NetworkManager
         copy-in rc.local /rw/etc
         chmod 0755 /rw/etc/rc.local
         EOF
@@ -65,6 +78,11 @@ let
 
       resolvConf = writeText "x" ''
         nameserver 10.152.152.10
+      '';
+
+      appendNetworkManagerConf = writeText "x" ''
+        [keyfile]
+        unmanaged-devices=*
       '';
 
       # HACK
