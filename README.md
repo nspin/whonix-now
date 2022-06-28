@@ -39,4 +39,4 @@ docker run --rm -it --name whonix-now-demo --label whonix-now-demo \
         --extra-experimental-features nix-command --extra-experimental-features flakes)
 ```
 
-See [./Makefile](./Makefile) and [./nix/whonix.nix](./nix/whonix.nix) for more features such as shared directories and audio support.
+See [./Makefile](./Makefile) and [./nix/whonix.nix](./nix/whonix.nix) for more features such as shared directories, audio support, and support for Kali Linux as an alternative to the Whonix Workstation.
