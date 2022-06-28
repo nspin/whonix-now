@@ -111,7 +111,7 @@ let
           '';
 
       gatewayQcow2 = "${patched}/Whonix-Gateway.qcow2";
-      workstationQcow2 = if kaliWorkstation then kali.images.vmQcow2 else "${patched}/Whonix-Workstation.qcow2";
+      workstationQcow2 = if kaliWorkstation then kali.vmQcow2 else "${patched}/Whonix-Workstation.qcow2";
 
       gatewayXml = "${patched}/Whonix-Gateway.xml";
       workstationXml = "${patched}/Whonix-Workstation.xml";
