@@ -10,9 +10,9 @@
 }:
 
 let
-  kaliWorkstation = true;
-  enableSharedDirectories = true;
-  enablePersistentImages = true;
+  kaliWorkstation = false;
+  enableSharedDirectories = false;
+  enablePersistentImages = false;
   gatewayVcpus = 1;
   gatewayMemoryMegabytes = 2048;
   workstationVcpus = 2;

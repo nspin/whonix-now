@@ -29,8 +29,7 @@ build:
 
 .PHONY: run
 run: build | $(shared_dir)
-	# docker run -d -it --name $(container_name) --label $(label) \
-	docker run --rm -it --name $(container_name) --label $(label) \
+	docker run -d -it --name $(container_name) --label $(label) \
 		--cap-add=NET_ADMIN \
 		--tmpfs /tmp \
 		--device /dev/kvm \
