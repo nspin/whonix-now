@@ -27,8 +27,8 @@ let
   images =
     let
       xz = fetchurl {
-        url = "https://download.whonix.org/libvirt/16.0.5.3/Whonix-XFCE-16.0.5.3.Intel_AMD64.qcow2.libvirt.xz";
-        hash = "sha256-h1fmeZKG1s0VC4ydoj98ed9mR61RKNZVBCE38XZG26Q=";
+        url = "https://download.whonix.org/libvirt/17.2.0.1/Whonix-Xfce-17.2.0.1.Intel_AMD64.qcow2.libvirt.xz";
+        hash = "sha256-LU4WXDHEaJNJcXj4BhlwNc3VS0tcypa0E+BIRjW5vwM=";
       };
 
       unpacked = runCommand "x" {
@@ -71,7 +71,7 @@ let
               -e "s,<currentMemory unit='KiB'>.*</currentMemory>,," \
               -e "s,</devices>,${sharedDirectoryFragment "gateway"}</devices>," \
               -e "s,/var/lib/libvirt/images,${runtimeImagesDirectory}," \
-              < ${unpacked}/Whonix-Gateway-*.xml > $out/Whonix-Gateway.xml
+              < ${unpacked}/Whonix-Gateway.xml > $out/Whonix-Gateway.xml
 
             sed \
               -e "s,<blkiotune>,<!--," \
@@ -81,7 +81,7 @@ let
               -e "s,<currentMemory unit='KiB'>.*</currentMemory>,," \
               -e "s,</devices>,${sharedDirectoryFragment "workstation"}</devices>," \
               -e "s,/var/lib/libvirt/images,${runtimeImagesDirectory}," \
-              < ${unpacked}/Whonix-Workstation-*.xml > $out/Whonix-Workstation.xml
+              < ${unpacked}/Whonix-Workstation.xml > $out/Whonix-Workstation.xml
 
             ln -s ${unpacked}/Whonix-Workstation-*.qcow2 $out/Whonix-Workstation.qcow2
 
@@ -94,19 +94,19 @@ let
             fname=50_user.conf
             dir=/etc/whonix_firewall.d
             path=$dir/$fname
-            guestfish add $new : run : mount /dev/sda1 / : copy-out $path .
+            guestfish add $new : run : mount /dev/sda3 / : copy-out $path .
             echo GATEWAY_ALLOW_INCOMING_ICMP=1 >> $fname
-            guestfish add $new : run : mount /dev/sda1 / : copy-in $fname $dir
+            guestfish add $new : run : mount /dev/sda3 / : copy-in $fname $dir
             rm $fname
 
             fname=whonix-gateway-firewall
             dir=/usr/bin
             path=$dir/$fname
-            guestfish add $new : run : mount /dev/sda1 / : copy-out $path .
+            guestfish add $new : run : mount /dev/sda3 / : copy-out $path .
             sed -i \
               's,\$iptables_cmd -A INPUT -p icmp -j DROP,$iptables_cmd -A INPUT -p icmp -j DROP; else $iptables_cmd -A INPUT -p icmp --icmp-type destination-unreachable -m state --state RELATED -j ACCEPT,' \
               $fname
-            guestfish add $new : run : mount /dev/sda1 / : copy-in $fname $dir : chown 0 0 $path : chmod 0755 $path
+            guestfish add $new : run : mount /dev/sda3 / : copy-in $fname $dir : chown 0 0 $path : chmod 0755 $path
             rm $fname
           '';
 
