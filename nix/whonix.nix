@@ -11,12 +11,12 @@
 
 let
   kaliWorkstation = false;
-  enableSharedDirectories = false;
+  enableSharedDirectories = true;
   enablePersistentImages = false;
-  gatewayVcpus = 1;
-  gatewayMemoryMegabytes = 2048;
-  workstationVcpus = 2;
-  workstationMemoryMegabytes = 4096;
+  gatewayVcpus = 2;
+  gatewayMemoryMegabytes = 4 * 1024;
+  workstationVcpus = 6;
+  workstationMemoryMegabytes = 16 * 1024;
 in
 
 let
