@@ -1,3 +1,5 @@
+SHARED ?= ../shared
+
 universal_name := whonix-now-demo
 
 label := $(universal_name)
@@ -6,7 +8,7 @@ image_tag := $(image_repository)
 container_name := $(universal_name)
 dockerfile := Dockerfile
 
-shared_dir := shared
+shared_dir := $(SHARED)
 
 host_uid := $(shell id -u)
 host_gid := $(shell id -g)
