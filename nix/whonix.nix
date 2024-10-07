@@ -83,31 +83,8 @@ let
               -e "s,/var/lib/libvirt/images,${runtimeImagesDirectory}," \
               < ${unpacked}/Whonix-Workstation.xml > $out/Whonix-Workstation.xml
 
+            ln -s ${unpacked}/Whonix-Gateway-*.qcow2 $out/Whonix-Gateway.qcow2
             ln -s ${unpacked}/Whonix-Workstation-*.qcow2 $out/Whonix-Workstation.qcow2
-
-            # HACK
-            # https://forums.whonix.org/t/have-firewall-accept-icmp-fragmentation-needed/10233
-
-            new=$out/Whonix-Gateway.qcow2
-            ${qemu}/bin/qemu-img create -f qcow2 -o backing_fmt=qcow2 -o backing_file=$(echo ${unpacked}/Whonix-Gateway-*.qcow2) $new
-
-            fname=50_user.conf
-            dir=/etc/whonix_firewall.d
-            path=$dir/$fname
-            guestfish add $new : run : mount /dev/sda3 / : copy-out $path .
-            echo GATEWAY_ALLOW_INCOMING_ICMP=1 >> $fname
-            guestfish add $new : run : mount /dev/sda3 / : copy-in $fname $dir
-            rm $fname
-
-            fname=whonix-gateway-firewall
-            dir=/usr/bin
-            path=$dir/$fname
-            guestfish add $new : run : mount /dev/sda3 / : copy-out $path .
-            sed -i \
-              's,\$iptables_cmd -A INPUT -p icmp -j DROP,$iptables_cmd -A INPUT -p icmp -j DROP; else $iptables_cmd -A INPUT -p icmp --icmp-type destination-unreachable -m state --state RELATED -j ACCEPT,' \
-              $fname
-            guestfish add $new : run : mount /dev/sda3 / : copy-in $fname $dir : chown 0 0 $path : chmod 0755 $path
-            rm $fname
           '';
 
       gatewayQcow2 = "${patched}/Whonix-Gateway.qcow2";

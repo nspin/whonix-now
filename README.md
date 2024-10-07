@@ -2,18 +2,6 @@
 
 This repository contains a collection of [Nix](https://nixos.org/) expressions and shell scripts for running [Whonix](https://www.whonix.org/) virtual machines on KVM via [libvirt](https://libvirt.org/) inside of Docker containers. Docker serves to simplify the configuration and management of the network and filesystem resources associated with Whonix virtual machines.
 
-```
-!!! WARNING !!!
-
-This repository includes a patch [1] to the Whonix-Gateway firewall to work
-around an unresolved libvirt-related networking issue.
-
-Do not use this repository for anonymization unless you understand the
-consequences of both this patch and the mere fact of its presence.
-
-[1] ./nix/whonix.nix#80
-```
-
 ## Quickstart
 
 No need to clone this repository.
