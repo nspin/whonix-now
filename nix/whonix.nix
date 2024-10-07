@@ -67,8 +67,8 @@ let
               -e "s,<blkiotune>,<!--," \
               -e "s,</blkiotune>,-->," \
               -e "s,<vcpu placement='static' cpuset='0'>1</vcpu>,<vcpu placement='static' cpuset='0'>${toString gatewayVcpus}</vcpu>," \
-              -e "s,<memory dumpCore='off' unit='KiB'>.*</memory>,<memory dumpCore='off' unit='KiB'>${toString (gatewayMemoryMegabytes * 1024)}</memory>," \
-              -e "s,<currentMemory unit='KiB'>.*</currentMemory>,," \
+              -e "s,<memory dumpCore='off' unit='GB'>.*</memory>,<memory dumpCore='off' unit='KiB'>${toString (gatewayMemoryMegabytes * 1024)}</memory>," \
+              -e "s,<currentMemory unit='GB'>.*</currentMemory>,," \
               -e "s,</devices>,${sharedDirectoryFragment "gateway"}</devices>," \
               -e "s,/var/lib/libvirt/images,${runtimeImagesDirectory}," \
               < ${unpacked}/Whonix-Gateway.xml > $out/Whonix-Gateway.xml
@@ -77,8 +77,8 @@ let
               -e "s,<blkiotune>,<!--," \
               -e "s,</blkiotune>,-->," \
               -e "s,<vcpu placement='static' cpuset='1'>1</vcpu>,<vcpu placement='static' cpuset='1'>${toString workstationVcpus}</vcpu>," \
-              -e "s,<memory dumpCore='off' unit='KiB'>.*</memory>,<memory dumpCore='off' unit='KiB'>${toString (workstationMemoryMegabytes * 1024)}</memory>," \
-              -e "s,<currentMemory unit='KiB'>.*</currentMemory>,," \
+              -e "s,<memory dumpCore='off' unit='GB'>.*</memory>,<memory dumpCore='off' unit='KiB'>${toString (workstationMemoryMegabytes * 1024)}</memory>," \
+              -e "s,<currentMemory unit='GB'>.*</currentMemory>,," \
               -e "s,</devices>,${sharedDirectoryFragment "workstation"}</devices>," \
               -e "s,/var/lib/libvirt/images,${runtimeImagesDirectory}," \
               < ${unpacked}/Whonix-Workstation.xml > $out/Whonix-Workstation.xml
