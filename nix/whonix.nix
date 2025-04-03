@@ -51,7 +51,7 @@ let
       patched =
         let
           sharedDirectoryFragment = subdirectory:
-            lib.replaceChars [ "\n" ] [ "\\n" ] (lib.optionalString enableSharedDirectories ''
+            lib.replaceStrings [ "\n" ] [ "\\n" ] (lib.optionalString enableSharedDirectories ''
               <filesystem type='mount' accessmode='mapped'>
                 <source dir='/shared/${subdirectory}'/>
                 <target dir='shared'/>
@@ -168,7 +168,7 @@ let
         #!${runtimeShell}
         set -eu
 
-        export PATH=${entryScriptEnv}/bin:$PATH
+        export PATH=${entryScriptEnv}/bin:/run/wrappers/bin:$PATH
 
         # validate and process input
         : "''${HOST_GID:=100}"
