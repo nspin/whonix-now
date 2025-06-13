@@ -27,8 +27,9 @@ let
   images =
     let
       xz = fetchurl {
-        url = "https://download.whonix.org/libvirt/17.2.3.7/Whonix-Xfce-17.2.3.7.Intel_AMD64.qcow2.libvirt.xz";
-        hash = "sha256-vXZt4hXo5ZLilwqRUhODXyxcueU+U63yiwDNA3M0tqU=";
+        url = "https://download.whonix.org/libvirt/17.2.8.5/Whonix-Xfce-17.2.8.5.Intel_AMD64.qcow2.libvirt.xz";
+        # url = "https://download.whonix.org/libvirt/17.3.9.9/Whonix-Xfce-17.3.9.9.Intel_AMD64.qcow2.libvirt.xz";
+        sha256 = "e543fd662d465959937d626950bc9c5c86543a3b0559eb608b70c374f601a1af";
       };
 
       unpacked = runCommand "x" {
