@@ -1,9 +1,15 @@
 SHARED ?= ../shared
 
-ifeq ($(KALI),1)
+ifneq ($(WN_CONFG),)
+	config := $(WN_CONFG)
+else ifeq ($(WN_STOCK),1)
+	config := stock
+else ifeq ($(WN_BIG),1)
+	config := big
+else ifeq ($(WN_KALI),1)
 	config := kali
 else
-	config := whonix
+	config := default
 endif
 
 universal_name := whonix-now-$(config)

@@ -11,13 +11,17 @@
 
 # TODO vcpu placement and cpuset
 
-{ kaliWorkstation ? false
-, enableSharedDirectories ? true
+{ workstationName ? "whonix"
+
 , enablePersistentImages ? false
-, gatewayVcpus ? 2
-, gatewayMemoryMegabytes ? gatewayVcpus * 2 * 1024
-, workstationVcpus ? if kaliWorkstation then 8 else 4
-, workstationMemoryMegabytes ? workstationVcpus * 2 * 1024
+
+, gatewayVcpus ? null
+, gatewayMemoryMegabytes ? null
+, enableGatewaySharedDirectory ? false
+
+, workstationVcpus ? null
+, workstationMemoryMegabytes ? null
+, enableWorkstationSharedDirectory ? false
 }:
 
 let
@@ -59,12 +63,12 @@ let
       patched =
         let
           sharedDirectoryFragment = subdirectory:
-            lib.replaceStrings [ "\n" ] [ "\\n" ] (lib.optionalString enableSharedDirectories ''
+            lib.replaceStrings [ "\n" ] [ "\\n" ] ''
               <filesystem type='mount' accessmode='mapped'>
                 <source dir='/shared/${subdirectory}'/>
                 <target dir='shared'/>
               </filesystem>
-            '');
+            '';
         in
           runCommand "x" {
             nativeBuildInputs = [ qemu ];
@@ -81,18 +85,6 @@ let
                 --replace-fail "<blkiotune>" "<!--" \
                 --replace-fail "</blkiotune>" "-->" \
                 --replace-fail /var/lib/libvirt/images ${runtimeImagesDirectory}
-
-            # substituteInPlace \
-            #   $out/Whonix-Gateway.xml \
-            #     --replace-fail \
-            #       "</devices>" \
-            #       "${sharedDirectoryFragment "gateway"}</devices>"
-
-            substituteInPlace \
-              $out/Whonix-Workstation.xml \
-                --replace-fail \
-                  "</devices>" \
-                  "${sharedDirectoryFragment "workstation"}</devices>"
 
             ${lib.optionalString (gatewayVcpus != null) ''
               substituteInPlace \
@@ -113,6 +105,14 @@ let
                     ""
             ''}
 
+            ${lib.optionalString enableGatewaySharedDirectory ''
+              substituteInPlace \
+                $out/Whonix-Gateway.xml \
+                  --replace-fail \
+                    "</devices>" \
+                    "${sharedDirectoryFragment "gateway"}</devices>"
+            ''}
+
             ${lib.optionalString (workstationVcpus != null) ''
               substituteInPlace \
                 $out/Whonix-Workstation.xml \
@@ -131,10 +131,22 @@ let
                     "<currentMemory unit='GB'>2</currentMemory>" \
                     ""
             ''}
+
+            ${lib.optionalString enableWorkstationSharedDirectory ''
+              substituteInPlace \
+                $out/Whonix-Workstation.xml \
+                  --replace-fail \
+                    "</devices>" \
+                    "${sharedDirectoryFragment "workstation"}</devices>"
+            ''}
           '';
 
       gatewayQcow2 = "${patched}/Whonix-Gateway.qcow2";
-      workstationQcow2 = if kaliWorkstation then kali.vmQcow2 else "${patched}/Whonix-Workstation.qcow2";
+
+      workstationQcow2 = {
+        whonix = "${patched}/Whonix-Workstation.qcow2";
+        kali = kali.vmQcow2;
+      }."${workstationName}";
 
       gatewayXml = "${patched}/Whonix-Gateway.xml";
       workstationXml = "${patched}/Whonix-Workstation.xml";
