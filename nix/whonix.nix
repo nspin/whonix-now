@@ -2,7 +2,7 @@
 , runCommand, writeText, writeScript, writeScriptBin, runtimeShell, buildEnv
 , fetchurl
 , nix, cacert
-, qemu, libvirt, virt-manager, libguestfs-with-appliance
+, qemu, libvirt, virt-manager
 , gosu, xauth, dockerTools
 , coreutils, gnugrep, gnused, iproute2, iptables
 , bashInteractive
@@ -65,7 +65,7 @@ let
             '');
         in
           runCommand "x" {
-            nativeBuildInputs = [ qemu libguestfs-with-appliance ];
+            nativeBuildInputs = [ qemu ];
           } ''
             mkdir $out
 
