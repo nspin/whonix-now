@@ -330,7 +330,6 @@ let
     runAsRoot = ''
       #!${stdenv.shell}
       ${coreutils}/bin/ln -s ${scripts.interactScript} /interact
-      ${coreutils}/bin/ln -s ${scripts.refreshXauthority}/bin/refresh-xauthority /
     '';
 
     config = {
