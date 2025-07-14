@@ -8,7 +8,7 @@
       in {
         inherit pkgs;
 
-        packages = pkgs.callPackage ./whonix.nix {};
+        packages = pkgs.callPackage ./configs.nix {};
 
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [

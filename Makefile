@@ -1,6 +1,12 @@
 SHARED ?= ../shared
 
-universal_name := whonix-now-demo
+ifeq ($(KALI),1)
+	config := kali
+else
+	config := whonix
+endif
+
+universal_name := whonix-now-$(config)
 
 label := $(universal_name)
 image_repository := $(universal_name)
@@ -15,8 +21,8 @@ host_gid := $(shell id -g)
 kvm_gid := $(shell stat -c '%g' /dev/kvm)
 audio_gid := $(shell stat -c '%g' /dev/snd/timer)
 
-entry_script_fragment := $$(nix-build nix -A entryScript)
-interact_script_fragment := $$(nix-build nix -A interactScript)
+entry_script_fragment := $$(nix-build nix -A $(config).entryScript)
+interact_script_fragment := $$(nix-build nix -A $(config).interactScript)
 
 .PHONY: none
 none:

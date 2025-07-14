@@ -11,17 +11,14 @@
 
 # TODO vcpu placement and cpuset
 
-let
-
-  kaliWorkstation = false;
-  enableSharedDirectories = true;
-  enablePersistentImages = false;
-  gatewayVcpus = 2;
-  gatewayMemoryMegabytes = gatewayVcpus * 2 * 1024;
-  workstationVcpus = if kaliWorkstation then 8 else 4;
-  workstationMemoryMegabytes = workstationVcpus * 2 * 1024;
-
-in
+{ kaliWorkstation ? false
+, enableSharedDirectories ? true
+, enablePersistentImages ? false
+, gatewayVcpus ? 2
+, gatewayMemoryMegabytes ? gatewayVcpus * 2 * 1024
+, workstationVcpus ? if kaliWorkstation then 8 else 4
+, workstationMemoryMegabytes ? workstationVcpus * 2 * 1024
+}:
 
 let
 
