@@ -9,8 +9,8 @@ in
 
 let
   iso = fetchurl {
-    url = "https://cdimage.kali.org/kali-2024.2/kali-linux-2024.2-live-amd64.iso";
-    hash = "sha256-jOcbFihfiHG5jj8hVThvEjwv3KkCUzDA0TSfRHmOZek=";
+    url = "https://cdimage.kali.org/kali-2025.2/kali-linux-2025.2-live-amd64.iso";
+    sha256 = "68f1117052bb0a6aa0fc0dee3b6525de1f5bccbd74c275fb050fe357a3f318a7";
   };
 
   vmQcow2 = runCommand "kali-live-persistent.qcow2" {

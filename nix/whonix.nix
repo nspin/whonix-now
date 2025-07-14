@@ -17,9 +17,9 @@ let
   enableSharedDirectories = true;
   enablePersistentImages = false;
   gatewayVcpus = 2;
-  gatewayMemoryMegabytes = 4 * 1024;
-  workstationVcpus = 4;
-  workstationMemoryMegabytes = 8 * 1024;
+  gatewayMemoryMegabytes = gatewayVcpus * 2 * 1024;
+  workstationVcpus = if kaliWorkstation then 8 else 4;
+  workstationMemoryMegabytes = workstationVcpus * 2 * 1024;
 
 in
 
