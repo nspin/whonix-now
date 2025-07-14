@@ -9,6 +9,8 @@
 , pkgs
 }:
 
+# TODO vcpu placement and cpuset
+
 let
   kaliWorkstation = false;
   enableSharedDirectories = true;
@@ -69,28 +71,66 @@ let
           } ''
             mkdir $out
 
-            sed \
-              -e "s,<blkiotune>,<!--," \
-              -e "s,</blkiotune>,-->," \
-              -e "s,<vcpu placement='static' cpuset='0'>1</vcpu>,<vcpu placement='static' cpuset='0'>${toString gatewayVcpus}</vcpu>," \
-              -e "s,<memory dumpCore='off' unit='GB'>.*</memory>,<memory dumpCore='off' unit='KiB'>${toString (gatewayMemoryMegabytes * 1024)}</memory>," \
-              -e "s,<currentMemory unit='GB'>.*</currentMemory>,," \
-              -e "s,</devices>,${sharedDirectoryFragment "gateway"}</devices>," \
-              -e "s,/var/lib/libvirt/images,${runtimeImagesDirectory}," \
-              < ${unpacked}/Whonix-Gateway.xml > $out/Whonix-Gateway.xml
-
-            sed \
-              -e "s,<blkiotune>,<!--," \
-              -e "s,</blkiotune>,-->," \
-              -e "s,<vcpu placement='static' cpuset='1'>1</vcpu>,<vcpu placement='static' cpuset='1'>${toString workstationVcpus}</vcpu>," \
-              -e "s,<memory dumpCore='off' unit='GB'>.*</memory>,<memory dumpCore='off' unit='KiB'>${toString (workstationMemoryMegabytes * 1024)}</memory>," \
-              -e "s,<currentMemory unit='GB'>.*</currentMemory>,," \
-              -e "s,</devices>,${sharedDirectoryFragment "workstation"}</devices>," \
-              -e "s,/var/lib/libvirt/images,${runtimeImagesDirectory}," \
-              < ${unpacked}/Whonix-Workstation.xml > $out/Whonix-Workstation.xml
-
             ln -s ${unpacked}/Whonix-Gateway-*.qcow2 $out/Whonix-Gateway.qcow2
             ln -s ${unpacked}/Whonix-Workstation-*.qcow2 $out/Whonix-Workstation.qcow2
+
+            cp ${unpacked}/Whonix-*.xml $out
+
+            substituteInPlace \
+              $out/Whonix-*.xml \
+                --replace-fail "<blkiotune>" "<!--" \
+                --replace-fail "</blkiotune>" "-->" \
+                --replace-fail /var/lib/libvirt/images ${runtimeImagesDirectory}
+
+            # substituteInPlace \
+            #   $out/Whonix-Gateway.xml \
+            #     --replace-fail \
+            #       "</devices>" \
+            #       "${sharedDirectoryFragment "gateway"}</devices>"
+
+            substituteInPlace \
+              $out/Whonix-Workstation.xml \
+                --replace-fail \
+                  "</devices>" \
+                  "${sharedDirectoryFragment "workstation"}</devices>"
+
+            ${lib.optionalString (gatewayVcpus != null) ''
+              substituteInPlace \
+                $out/Whonix-Gateway.xml \
+                  --replace-fail \
+                    "<vcpu placement='static' cpuset='0'>1</vcpu>" \
+                    "<vcpu>${toString gatewayVcpus}</vcpu>"
+            ''}
+
+            ${lib.optionalString (gatewayMemoryMegabytes != null) ''
+              substituteInPlace \
+                $out/Whonix-Gateway.xml \
+                  --replace-fail \
+                    "<memory dumpCore='off' unit='GB'>2</memory>" \
+                    "<memory dumpCore='off' unit='MB'>${toString gatewayMemoryMegabytes}</memory>" \
+                  --replace-fail \
+                    "<currentMemory unit='GB'>2</currentMemory>" \
+                    ""
+            ''}
+
+            ${lib.optionalString (workstationVcpus != null) ''
+              substituteInPlace \
+                $out/Whonix-Workstation.xml \
+                  --replace-fail \
+                    "<vcpu placement='static' cpuset='1'>1</vcpu>" \
+                    "<vcpu>${toString workstationVcpus}</vcpu>"
+            ''}
+
+            ${lib.optionalString (workstationMemoryMegabytes != null) ''
+              substituteInPlace \
+                $out/Whonix-Workstation.xml \
+                  --replace-fail \
+                    "<memory dumpCore='off' unit='GB'>2</memory>" \
+                    "<memory dumpCore='off' unit='MB'>${toString workstationMemoryMegabytes}</memory>" \
+                  --replace-fail \
+                    "<currentMemory unit='GB'>2</currentMemory>" \
+                    ""
+            ''}
           '';
 
       gatewayQcow2 = "${patched}/Whonix-Gateway.qcow2";
