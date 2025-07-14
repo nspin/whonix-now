@@ -26,11 +26,16 @@ let
 
   images =
     let
-      xz = fetchurl {
-        url = "https://download.whonix.org/libvirt/17.2.8.5/Whonix-Xfce-17.2.8.5.Intel_AMD64.qcow2.libvirt.xz";
-        # url = "https://download.whonix.org/libvirt/17.3.9.9/Whonix-Xfce-17.3.9.9.Intel_AMD64.qcow2.libvirt.xz";
-        sha256 = "e543fd662d465959937d626950bc9c5c86543a3b0559eb608b70c374f601a1af";
-      };
+      # nix-store --add-fixed sha512 Whonix-Xfce-*.Intel_AMD64.qcow2.libvirt.xz
+      xz =
+        let
+          version = "17.3.9.9";
+          sha512 = "9a59d60edaacbb6b5659601f1c91d1f5712ea55bb1714a953c3b8b77b5fd0e5849cf96feaedd53f12fbfaf50261bcdbba252119ed722ddd4ea3d7b07d1724c4e";
+        in
+          fetchurl {
+            url = "https://download.whonix.org/libvirt/${version}/Whonix-Xfce-${version}.Intel_AMD64.qcow2.libvirt.xz";
+            inherit sha512;
+          };
 
       unpacked = runCommand "x" {
         nativeBuildInputs = [ qemu ];
