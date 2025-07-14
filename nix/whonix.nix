@@ -12,16 +12,19 @@
 # TODO vcpu placement and cpuset
 
 let
+
   kaliWorkstation = false;
   enableSharedDirectories = true;
   enablePersistentImages = false;
   gatewayVcpus = 2;
   gatewayMemoryMegabytes = 4 * 1024;
-  workstationVcpus = 6;
-  workstationMemoryMegabytes = 16 * 1024;
+  workstationVcpus = 4;
+  workstationMemoryMegabytes = 8 * 1024;
+
 in
 
 let
+
   kali = callPackage ./kali.nix {};
 
   runtimeImagesDirectory = if enablePersistentImages then "/shared/container" else "/images";
