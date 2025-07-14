@@ -92,7 +92,7 @@ show-logs:
 
 .PHONY: self-contained-image-build
 self-contained-image-build:
-	docker load -i $$(nix-build nix -A selfContainedImage)
+	docker load -i $$(nix-build nix -A $(config).selfContainedImage)
 
 .PHONY: self-contained-image-run
 self-contained-image-run: | $(shared_dir)
