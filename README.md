@@ -23,8 +23,10 @@ docker run --rm -it --name whonix-now-demo --label whonix-now-demo \
     --env KVM_GID=$(stat -c '%g' /dev/kvm) \
     --env DISPLAY \
     whonix-now-demo \
-    $(nix build 'github:nspin/whonix-now?dir=nix#entryScript' --print-out-paths \
-        --extra-experimental-features nix-command --extra-experimental-features flakes)
+    $(nix build 'github:nspin/whonix-now?dir=nix#whonix.entryScript' \
+        --extra-experimental-features nix-command \
+        --extra-experimental-features flakes \
+        --print-out-paths)
 ```
 
 See [./Makefile](./Makefile) and [./nix/whonix.nix](./nix/whonix.nix) for more features such as shared directories, audio support, and support for Kali Linux as an alternative to the Whonix Workstation.
