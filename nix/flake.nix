@@ -12,8 +12,6 @@
 
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
-            qemu
-            libguestfs-with-appliance
             # ...
           ];
         };
